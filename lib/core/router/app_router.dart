@@ -9,6 +9,8 @@ import '../../features/tasks/presentation/task_board_screen.dart';
 import '../../features/tasks/presentation/atomic_breakdown_screen.dart';
 import '../../features/statistics/statistics_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/gamification/presentation/screens/stats_screen.dart';
+import '../../features/gamification/presentation/screens/badge_screen.dart';
 import 'main_layout.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -60,6 +62,16 @@ final appRouter = GoRouter(
         taskId: state.pathParameters['taskId']!,
         subtaskId: state.pathParameters['subtaskId']!,
       ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/stats',
+      builder: (context, state) => const StatsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/badges',
+      builder: (context, state) => const BadgeScreen(),
     ),
   ],
 );

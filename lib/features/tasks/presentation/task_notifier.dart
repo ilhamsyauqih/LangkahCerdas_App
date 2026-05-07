@@ -2,6 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../domain/task_model.dart';
 import '../data/task_repository.dart';
+import '../../gamification/presentation/gamification_notifier.dart';
 
 final taskRepositoryProvider = Provider((ref) => TaskRepository());
 
@@ -54,7 +55,17 @@ class TaskNotifier extends Notifier<List<TaskModel>> {
     final task = state.firstWhere((t) => t.id == taskId);
     final updatedSubtasks = task.subtasks.map((st) {
       if (st.id == subtaskId) {
-        return st.copyWith(isCompleted: !st.isCompleted);
+        final toggled = st.copyWith(isCompleted: !st.isCompleted);
+        if (toggled.isCompleted) {
+          int xp = 10;
+          if (st.estimatedMinutes >= 60) {
+            xp = 50;
+          } else if (st.estimatedMinutes >= 30) {
+            xp = 25;
+          }
+          ref.read(gamificationNotifierProvider.notifier).addXP(xp);
+        }
+        return toggled;
       }
       return st;
     }).toList();

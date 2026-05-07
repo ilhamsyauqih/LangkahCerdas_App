@@ -67,18 +67,18 @@ class MainLayout extends ConsumerWidget {
                   onTap: () => context.go('/dashboard'),
                 ),
                 _NavBarItem(
-                  icon: Icons.calendar_month_rounded,
+                  icon: Icons.list_alt_rounded,
                   isSelected: currentIndex == 1,
                   onTap: () => context.go('/tasks'),
                 ),
                 const SizedBox(width: 48), // Space for FAB
                 _NavBarItem(
-                  icon: Icons.insert_drive_file_rounded,
+                  icon: Icons.person_rounded,
                   isSelected: currentIndex == 3,
                   onTap: () => context.go('/statistics'),
                 ),
                 _NavBarItem(
-                  icon: Icons.people_alt_rounded,
+                  icon: Icons.settings_rounded,
                   isSelected: currentIndex == 4,
                   onTap: () => context.go('/settings'),
                 ),

@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../tasks/domain/task_model.dart';
 import '../tasks/presentation/task_notifier.dart';
 import '../auth/presentation/auth_notifier.dart';
+import '../gamification/presentation/gamification_notifier.dart';
+import '../../core/theme/theme_provider.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
@@ -15,6 +17,10 @@ class StatisticsScreen extends ConsumerWidget {
     final userState = ref.watch(authNotifierProvider);
     final user = userState.value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final gamificationState = ref.watch(gamificationNotifierProvider);
+    final stats = gamificationState.stats;
+    final badges = gamificationState.badges;
     
     int totalTasks = tasks.length;
     int completedTasks = tasks.where((t) => t.status == TaskStatus.done).length;
@@ -31,9 +37,23 @@ class StatisticsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2D3748) : const Color(0xFFEBEBFF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: isDark ? Colors.amber : const Color(0xFF6534FF),
+                  size: 24,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -43,7 +63,7 @@ class StatisticsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // --- PROFILE SECTION ---
-            _buildProfileSection(context, ref, user, isDark),
+            _buildProfileSection(context, ref, user, isDark, stats.level, stats.totalXP),
             
             const SizedBox(height: 48),
             
@@ -73,14 +93,18 @@ class StatisticsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Streak Anda', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-                        const Text('3 Hari', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                        Text('Pertahankan momentum!', style: TextStyle(color: Colors.white)),
+                        Text('${stats.streakDays} Hari', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                        const Text('Pertahankan momentum!', style: TextStyle(color: Colors.white)),
                       ],
                     ),
                   ),
                 ],
               ),
             ).animate().fadeIn().slideY(),
+            
+            const SizedBox(height: 16),
+            
+            _buildAchievementOverview(context, badges, isDark),
             
             const SizedBox(height: 16),
             
@@ -110,7 +134,7 @@ class StatisticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, WidgetRef ref, dynamic user, bool isDark) {
+  Widget _buildProfileSection(BuildContext context, WidgetRef ref, dynamic user, bool isDark, int level, int xp) {
     if (user == null) return const SizedBox.shrink();
 
     // Parse icon from avatar string
@@ -170,6 +194,19 @@ class StatisticsScreen extends ConsumerWidget {
           user.email,
           style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ).animate().fadeIn(delay: 100.ms),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF6534FF).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF6534FF).withOpacity(0.3)),
+          ),
+          child: Text(
+            'Level $level • $xp XP',
+            style: const TextStyle(color: Color(0xFF6534FF), fontWeight: FontWeight.bold),
+          ),
+        ).animate().fadeIn(delay: 200.ms),
       ],
     );
   }
@@ -276,5 +313,51 @@ class StatisticsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildAchievementOverview(BuildContext context, List badges, bool isDark) {
+    int unlockedCount = badges.where((b) => b.isUnlocked).length;
+    
+    return GestureDetector(
+      onTap: () => context.push('/badges'),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF9F43), Color(0xFFFF6B81)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: const Color(0xFFFF6B81).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Pencapaian', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text('$unlockedCount / ${badges.length} Badge', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white),
+          ],
+        ),
+      ),
+    ).animate().fadeIn().slideX();
   }
 }

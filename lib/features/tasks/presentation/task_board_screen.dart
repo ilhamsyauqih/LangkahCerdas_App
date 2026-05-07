@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../domain/task_model.dart';
 import 'task_notifier.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class TaskBoardScreen extends ConsumerWidget {
   const TaskBoardScreen({super.key});
@@ -25,9 +26,23 @@ class TaskBoardScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(Icons.settings, color: isDark ? Colors.white : Colors.black87),
-            onPressed: () => context.push('/settings'),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2D3748) : const Color(0xFFEBEBFF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: isDark ? Colors.amber : const Color(0xFF6534FF),
+                  size: 24,
+                ),
+              ),
+            ),
           ),
         ],
       ),

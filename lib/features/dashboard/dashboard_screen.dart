@@ -5,6 +5,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../tasks/domain/task_model.dart';
 import '../tasks/presentation/task_notifier.dart';
 import '../auth/presentation/auth_notifier.dart';
+import '../gamification/presentation/gamification_notifier.dart';
+import '../gamification/presentation/widgets/level_card.dart';
+import '../gamification/presentation/widgets/levelup_dialog.dart';
+import '../../core/theme/theme_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -13,7 +17,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(taskNotifierProvider);
     final userState = ref.watch(authNotifierProvider);
-    final userName = userState.value?.name ?? 'User';
+    final user = userState.value;
 
     // Calculate progress
     int totalTasks = tasks.length;
@@ -24,6 +28,18 @@ class DashboardScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nextAction = ref.watch(nextActionProvider);
 
+    ref.listen(gamificationNotifierProvider, (previous, next) {
+      if (next.newlyUnlockedLevel > 0 && (previous?.newlyUnlockedLevel ?? 0) == 0) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => LevelUpDialog(level: next.newlyUnlockedLevel),
+        ).then((_) {
+          ref.read(gamificationNotifierProvider.notifier).clearLevelUpEvent();
+        });
+      }
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -33,9 +49,9 @@ class DashboardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(context, userName, isDark),
+              _buildHeader(context, ref, user, isDark),
               const SizedBox(height: 24),
-              _buildHeroCard(context, overallProgress, nextAction),
+              const LevelCard(),
               const SizedBox(height: 32),
               _buildSectionTitle(context, 'In Progress', inProgressTasks.length.toString(), isDark),
               const SizedBox(height: 16),
@@ -51,19 +67,46 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, bool isDark) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, dynamic user, bool isDark) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Hello, Selamat Pagi';
+    } else if (hour < 15) {
+      greeting = 'Hello, Selamat Siang';
+    } else if (hour < 18) {
+      greeting = 'Hello, Selamat Sore';
+    } else {
+      greeting = 'Hello, Selamat Malam';
+    }
+
+    IconData avatarIcon = Icons.person;
+    if (user != null && user.avatar != null) {
+      int? code = int.tryParse(user.avatar!);
+      if (code != null) {
+        avatarIcon = IconData(code, fontFamily: 'MaterialIcons');
+      }
+    }
+    final String name = user?.name ?? 'User';
+
     return Row(
       children: [
-        const CircleAvatar(
-          radius: 24,
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'), // Placeholder image
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            border: Border.all(color: Theme.of(context).primaryColor, width: 2),
+          ),
+          child: Icon(avatarIcon, size: 28, color: Theme.of(context).primaryColor),
         ).animate().scale(),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hello!', style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey, fontSize: 14)),
+              Text(greeting, style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey, fontSize: 14)),
               Text(
                 name,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -71,22 +114,20 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ).animate().fadeIn().slideX(),
         ),
-        Stack(
-          children: [
-            const Icon(Icons.notifications_none_rounded, size: 28),
-            Positioned(
-              right: 2,
-              top: 2,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF6534FF),
-                  shape: BoxShape.circle,
-                ),
-              ),
+        GestureDetector(
+          onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2D3748) : const Color(0xFFEBEBFF),
+              shape: BoxShape.circle,
             ),
-          ],
+            child: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: isDark ? Colors.amber : const Color(0xFF6534FF),
+              size: 24,
+            ),
+          ),
         ).animate().scale(delay: 200.ms),
       ],
     );
