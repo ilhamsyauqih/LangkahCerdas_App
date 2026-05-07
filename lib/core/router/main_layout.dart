@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../features/tasks/presentation/task_notifier.dart';
@@ -96,37 +97,89 @@ class MainLayout extends ConsumerWidget {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Buat Proyek Baru'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleCtrl,
-              decoration: const InputDecoration(labelText: 'Nama Proyek'),
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B).withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Buat Proyek Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: titleCtrl,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: 'Nama Proyek',
+                      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                      filled: true,
+                      fillColor: isDark ? Colors.black.withOpacity(0.2) : Colors.grey[100],
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descCtrl,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: 'Deskripsi',
+                      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                      filled: true,
+                      fillColor: isDark ? Colors.black.withOpacity(0.2) : Colors.grey[100],
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context), 
+                        child: Text('Batal', style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]))
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (titleCtrl.text.isNotEmpty) {
+                            ref.read(taskNotifierProvider.notifier).addTask(titleCtrl.text, descCtrl.text);
+                            Navigator.pop(context);
+                            context.go('/tasks');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6534FF),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Deskripsi'),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (titleCtrl.text.isNotEmpty) {
-                ref.read(taskNotifierProvider.notifier).addTask(titleCtrl.text, descCtrl.text);
-                Navigator.pop(context);
-                context.go('/tasks');
-              }
-            },
-            child: const Text('Simpan'),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
